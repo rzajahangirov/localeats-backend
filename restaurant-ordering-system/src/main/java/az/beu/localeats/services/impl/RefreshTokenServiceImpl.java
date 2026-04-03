@@ -25,17 +25,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public RefreshToken createRefreshToken(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User can't find " + email));
-
-
-        refreshTokenRepository.findByUserId(user.getId())
-                .ifPresent(token -> refreshTokenRepository.delete(token));
-
-
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+        refreshTokenRepository.deleteByUserId(user.getId());
+        refreshTokenRepository.flush();
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
                 .token(UUID.randomUUID().toString())
-                .expiryDate(Instant.now().plusMillis(600000)) // 10 dəqiqə
+                .expiryDate(Instant.now().plusMillis(600000))
                 .build();
 
         return refreshTokenRepository.save(refreshToken);
